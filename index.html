@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Demo UPI Pay (₹1)</title>
+  <style>
+    /* General Styles */
+    body {
+      font-family: system-ui, -apple-system, Roboto, Arial; 
+      max-width: 640px; 
+      margin: 2rem auto; 
+      padding: 1rem; 
+      background-color: #f8f9fa; /* Soft background for a modern look */
+      color: #333; /* Darker text for better readability */
+    }
+
+    /* Card Container */
+    .card {
+      background-color: #ffffff; /* White background for the card */
+      border-radius: 12px; 
+      padding: 1.5rem; /* Increased padding for breathing room */
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Softer, more realistic shadow */
+      border: 1px solid #e0e0e0; /* Subtle border for depth */
+      transition: box-shadow 0.3s ease; /* Smooth transition on hover */
+    }
+    .card:hover {
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12); /* Subtle hover effect */
+    }
+
+    /* Headings and Text */
+    h1 {
+      font-size: 1.5rem; 
+      font-weight: 700; 
+      color: #0b63ce; /* Blue accent for headings */
+      margin-bottom: 1rem;
+    }
+    .muted {
+      color: #666; 
+      font-size: 0.95rem; 
+      line-height: 1.5; /* Better line height for readability */
+      margin-bottom: 1rem;
+    }
+    p {
+      margin: 0.5rem 0; 
+      font-size: 1rem; 
+      line-height: 1.6;
+    }
+    strong {
+      color: #0b63ce; /* Highlight important text */
+    }
+
+    /* Button Styles */
+    .btn {
+      display: inline-block; 
+      padding: 0.75rem 1.2rem; 
+      border-radius: 8px; 
+      background: linear-gradient(180deg, #0b63ce 0%, #0857b1 100%); /* Gradient for a modern button */
+      color: #fff; 
+      text-decoration: none; 
+      font-weight: 600; 
+      border: none; 
+      cursor: pointer; 
+      transition: background 0.3s ease, transform 0.2s ease; /* Smooth transitions */
+      position: relative; /* For potential icons */
+      overflow: hidden; /* Ensure icons don't overflow */
+    }
+    .btn::before {
+      content: '💳'; /* Simple icon for pay button (using Unicode) */
+      margin-right: 0.5rem; /* Space for icon */
+    }
+    .btn:hover {
+      background: linear-gradient(180deg, #0857b1 0%, #0b63ce 100%); /* Reverse gradient on hover */
+      transform: translateY(-2px); /* Slight lift for interactivity */
+    }
+    .btn:active {
+      transform: translateY(1px); /* Pressed effect */
+    }
+
+    /* Input and Textarea Styles */
+    input, textarea {
+      width: 100%; 
+      padding: 0.75rem; /* Increased padding for better touch targets */
+      margin-top: 0.5rem; 
+      border-radius: 6px; 
+      border: 1px solid #ddd; 
+      font-size: 1rem; 
+      transition: border-color 0.3s ease, box-shadow 0.3s ease; /* Smooth focus effect */
+      background-color: #f9f9f9; /* Light background for inputs */
+    }
+    input:focus, textarea:focus {
+      border-color: #0b63ce; /* Blue border on focus */
+      box-shadow: 0 0 0 3px rgba(11, 99, 206, 0.1); /* Subtle glow */
+      outline: none; /* Remove default outline */
+    }
+    textarea {
+      font-family: monospace; /* Make UPI link look like code */
+      background-color: #f0f0f0; /* Differentiate from regular inputs */
+      resize: vertical; /* Allow vertical resizing */
+    }
+
+    /* Other Elements */
+    hr {
+      border: 0; 
+      border-top: 1px solid #e0e0e0; /* Subtle divider */
+      margin: 1.5rem 0; 
+    }
+    button#iPaidBtn {
+      background-color: #28a745; /* Green for success-oriented button */
+      padding: 0.75rem 1.2rem; 
+      border-radius: 8px; 
+      color: #fff; 
+      border: none; 
+      cursor: pointer; 
+      transition: background 0.3s ease, transform 0.2s ease;
+    }
+    button#iPaidBtn:hover {
+      background-color: #218838; /* Darker green on hover */
+      transform: translateY(-2px);
+    }
+    button#iPaidBtn:active {
+      transform: translateY(1px);
+    }
+    #status {
+      font-weight: 500; 
+      color: #28a745; /* Green for status to indicate success */
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Checkout</h1>
+    <p class="muted">Order: Demo item</p>
+    <p><strong>Amount:</strong> ₹<span id="amount">1.00</span></p>
+    <p><strong>Order ID:</strong> <span id="orderId"></span></p>
+
+    <label>Payee UPI ID (pa)</label>
+    <input id="pa" value="merchant@bank" />
+
+    <label>Payee Name (pn)</label>
+    <input id="pn" value="DemoMerchant" />
+
+    <label>Transaction Note (tn)</label>
+    <input id="tn" value="ORDER_DEMO_{{random}}" />
+
+    <div style="margin-top:1rem;">
+      <a id="payBtn" class="btn" href="#">Pay via UPI</a>
+    </div>
+
+    <hr style="margin:1rem 0">
+
+    <p class="muted">If your UPI app does not open, copy the UPI link below and open it from your phone's browser or UPI app.</p>
+    <textarea id="upilink" rows="2" readonly></textarea>
+
+    <hr style="margin:1rem 0">
+
+    <button id="iPaidBtn">I paid — check status</button>
+    <p id="status" class="muted"></p>
+  </div>
+
+<script>
+(function(){
+  // Generate an order id
+  function genOrderId(){
+    return 'ORD' + Date.now().toString().slice(-8) + Math.floor(Math.random()*900+100);
+  }
+
+  const orderId = genOrderId();
+  document.getElementById('orderId').innerText = orderId;
+  const amount = '1.00';
+  const paField = document.getElementById('pa');
+  const pnField = document.getElementById('pn');
+  const tnField = document.getElementById('tn');
+
+  // Pre-populate tn with order id
+  tnField.value = `ORDER_${orderId}`;
+
+  function buildUpiLink(){
+    const pa = encodeURIComponent(paField.value.trim());
+    const pn = encodeURIComponent(pnField.value.trim());
+    const am = encodeURIComponent(amount);
+    const cu = 'INR';
+    const tn = encodeURIComponent(tnField.value);
+    // Basic UPI deep link
+    const upi = `upi://pay?pa=${pa}&pn=${pn}&am=${am}&cu=${cu}&tn=${tn}`;
+    return upi;
+  }
+
+  function buildIntentLink(){
+    // Android intent form helps Chrome trigger installed UPI apps reliably
+    // Package can be omitted to let user choose app; here's generic pattern
+    const common = buildUpiLink();
+    // convert scheme to path for intent
+    // Note: this is a heuristic; some browsers handle upi:// fine.
+    const uri = encodeURIComponent(common);
+    return `intent://${uri}#Intent;scheme=upi;package=com.google.android.apps.nbu.paisa.user;end`;
+  }
+
+  const payBtn = document.getElementById('payBtn');
+  const upiTextarea = document.getElementById('upilink');
+
+  function openUpi(){
+    const upi = buildUpiLink();
+    upiTextarea.value = upi;
+    // Try using window.location to open native UPI apps on mobile
+    // Use intent fallback for Chrome on Android
+    // Try intent first (safe) then upi://
+    // We set href and click to let browser handle it.
+    const intent = buildIntentLink();
+
+    // Try to open intent by setting location
+    window.location.href = intent;
+
+    // As a fallback after small delay (if not handled), open upi://
+    // (Note: many browsers will just switch to UPI app and not return)
+    setTimeout(()=> {
+      window.location.href = upi;
+    }, 600);
+  }
+
+  payBtn.addEventListener('click', function(e){
+    e.preventDefault();
+    openUpi();
+
+    // Log order creation to your backend for later verification (optional)
+    // Replace BACKEND_BASE with your server URL if you have one
+    const BACKEND_BASE = 'http://localhost:3000'; // e.g. https://your-backend.example.com
+    if (BACKEND_BASE) {
+      fetch(BACKEND_BASE + '/create-order', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ orderId, amount, pa: paField.value, pn: pnField.value, tn: tnField.value })
+      }).catch(()=>{ /* ignore errors if offline */ });
+    }
+  });
+
+  // I paid button: queries backend to check if server marked this order paid
+  document.getElementById('iPaidBtn').addEventListener('click', async function(){
+    const BACKEND_BASE = 'http://localhost:3000'; // set to your backend to auto-check
+    if (!BACKEND_BASE){
+      alert('No backend configured. If you implemented the backend, set BACKEND_BASE in the code to poll it.');
+      return;
+    }
+    try {
+      const res = await fetch(BACKEND_BASE + '/order-status?orderId=' + encodeURIComponent(orderId));
+      const json = await res.json();
+      if (json && json.status) {
+        document.getElementById('status').innerText = `Status: ${json.status}`;
+      } else {
+        document.getElementById('status').innerText = `No status available`;
+      }
+    } catch(err){
+      document.getElementById('status').innerText = 'Error checking status';
+    }
+  });
+
+})();
+</script>
+</body>
+</html>
